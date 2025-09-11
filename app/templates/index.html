@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Subtitle Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section {
+            border: 2px dashed #ddd;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            transition: border-color 0.3s;
+        }
+        
+        .upload-section:hover {
+            border-color: #007bff;
+        }
+        
+        .upload-section.dragover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        
+        .upload-area {
+            padding: 30px;
+            text-align: center;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+        
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #666;
+            margin: 10px 0;
+        }
+        
+        .upload-or {
+            font-size: 14px;
+            color: #999;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .browse-button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin: 10px 0;
+        }
+        
+        .browse-button:hover {
+            background-color: #218838;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .remove-file {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        
+        .remove-file:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Additional utility classes */
+        .hidden {
+            display: none !important;
+        }
+        
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .margin-y {
+            margin: 20px 0;
+        }
+        
+        .margin-y-small {
+            margin: 15px 0;
+        }
+        
+        .block-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .language-select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 200px;
+        }
+        
+        .checkbox-large {
+            transform: scale(1.2);
+        }
+        
+        #fileInput {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .status-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 20px;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .supported-formats {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .download-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .download-button {
+            background-color: #28a745;
+        }
+        
+        .download-button:hover {
+            background-color: #218838;
+        }
+        
+        .download-video-button {
+            background-color: #6f42c1;
+            margin-left: 10px;
+        }
+        
+        .download-video-button:hover {
+            background-color: #5a32a3;
+        }
+        
+        .processing-info {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 AI Subtitle Generator</h1>
+        <p style="text-align: center; color: #6c757d; margin-bottom: 30px;">
+            Upload your video and get accurate AI-generated subtitles in seconds
+        </p>
+        
+        <div class="upload-section" id="uploadSection">
+            <div>
+                <h3>📁 Upload Video File</h3>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📹</div>
+                    <p class="upload-text">Drag and drop your video file here</p>
+                    <div class="upload-or">- OR -</div>
+                    <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">
+                        📂 Browse Files
+                    </button>
+                    <input type="file" id="fileInput" accept="video/*" style="display: none;" />
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <span id="fileName"></span>
+                        <button type="button" class="remove-file" onclick="removeFile()">❌</button>
+                    </div>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <label style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <input type="checkbox" id="embedSubtitles" style="transform: scale(1.2);">
+                        <span>📹 Create video with embedded soft subtitles (can be toggled on/off)</span>
+                    </label>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <label for="languageSelect" style="display: block; margin-bottom: 5px; font-weight: bold;">🌐 Subtitle Language:</label>
+                    <select id="languageSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd; width: 200px;">
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="zh">Chinese</option>
+                        <option value="yo">Yoruba</option>
+                    </select>
+                </div>
+                
+                <br>
+                <button id="uploadBtn" onclick="uploadFile()">🚀 Generate Subtitles</button>
+            </div>
+            
+            <div class="supported-formats">
+                <strong>Supported formats:</strong> MP4, AVI, MOV, MKV, WMV, FLV, WebM<br>
+                <strong>Note:</strong> Videos with embedded subtitles will take longer to process
+            </div>
+        </div>
+        
+        <div class="status-section" id="statusSection">
+            <h3>📊 Processing Status</h3>
+            <div id="statusMessage">Initializing...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="processing-info" id="processingInfo"></div>
+            
+            <div class="download-section" id="downloadSection" style="display: none;">
+                <button class="download-button" id="downloadBtn" onclick="downloadSubtitles()">
+                    📥 Download Subtitles (.srt)
+                </button>
+                <button class="download-button" id="downloadVideoBtn" onclick="downloadVideo()" style="display: none; background-color: #6f42c1; margin-left: 10px;">
+                    🎬 Download Video with Subtitles
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaskId = null;
+        let embedRequested = false;
+        let statusCheckInterval = null;
+        
+        // File input change handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                displaySelectedFile(file);
+                validateFile(file);
+            }
+        });
+        
+        // Display selected file
+        function displaySelectedFile(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            fileName.textContent = `📁 ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.style.display = 'flex';
+            
+            // Update upload area appearance
+            uploadArea.style.backgroundColor = '#e8f5e8';
+            uploadArea.style.borderColor = '#28a745';
+        }
+        
+        // Remove selected file
+        function removeFile() {
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            
+            // Reset upload area appearance
+            uploadArea.style.backgroundColor = '#fafafa';
+            uploadArea.style.borderColor = '#ddd';
+            
+            clearMessages();
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Drag and drop handlers
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                document.getElementById('fileInput').files = files;
+                displaySelectedFile(file);
+                validateFile(file);
+            }
+        });
+        
+        function validateFile(file) {
+            const maxSize = 500 * 1024 * 1024; // 500MB
+            const supportedFormats = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (file.size > maxSize) {
+                showError('File size must be less than 500MB');
+                return false;
+            }
+            
+            if (!supportedFormats.includes(fileExtension)) {
+                showError('Unsupported file format. Please use: ' + supportedFormats.join(', '));
+                return false;
+            }
+            
+            clearMessages();
+            return true;
+        }
+        
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const embedCheckbox = document.getElementById('embedSubtitles');
+            const languageSelect = document.getElementById('languageSelect');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select a video file');
+                return;
+            }
+            
+            if (!validateFile(file)) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('embed_subtitles', embedCheckbox.checked);
+            formData.append('language', languageSelect.value);
+            
+            // Debug logging
+            console.log('=== FRONTEND DEBUG ===');
+            console.log('Selected language:', languageSelect.value);
+            console.log('Language select element:', languageSelect);
+            console.log('Embed subtitles:', embedCheckbox.checked);
+            console.log('=== END FRONTEND DEBUG ===');
+            
+            // Debug logging
+            console.log('=== FRONTEND DEBUG ===');
+            console.log('Selected language:', languageSelect.value);
+            console.log('Embed subtitles:', embedCheckbox.checked);
+            console.log('=== END FRONTEND DEBUG ===');
+            
+            try {
+                // Disable upload button
+                const uploadBtn = document.getElementById('uploadBtn');
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = embedCheckbox.checked ? '⏳ Uploading (Video embedding will take longer)...' : '⏳ Uploading...';
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentTaskId = result.task_id;
+                    embedRequested = result.embed_subtitles;
+                    showStatusSection();
+                    startStatusChecking();
+                } else {
+                    showError(result.detail || 'Upload failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                // Re-enable upload button
+                const uploadBtn = document.getElementById('uploadBtn');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '🚀 Generate Subtitles';
+            }
+        }
+        
+        function showStatusSection() {
+            document.getElementById('statusSection').style.display = 'block';
+            document.getElementById('statusSection').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function startStatusChecking() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            statusCheckInterval = setInterval(checkStatus, 2000);
+            checkStatus(); // Check immediately
+        }
+        
+        async function checkStatus() {
+            if (!currentTaskId) return;
+            
+            try {
+                const response = await fetch(`/status/${currentTaskId}`);
+                const status = await response.json();
+                
+                if (response.ok) {
+                    updateStatusDisplay(status);
+                    
+                    if (status.status === 'completed') {
+                        clearInterval(statusCheckInterval);
+                        showDownloadButton();
+                    } else if (status.status === 'error') {
+                        clearInterval(statusCheckInterval);
+                        showError(status.message);
+                    }
+                } else {
+                    clearInterval(statusCheckInterval);
+                    showError('Failed to check status');
+                }
+            } catch (error) {
+                console.error('Status check error:', error);
+            }
+        }
+        
+        function updateStatusDisplay(status) {
+            const statusMessage = document.getElementById('statusMessage');
+            const progressFill = document.getElementById('progressFill');
+            const processingInfo = document.getElementById('processingInfo');
+            
+            statusMessage.textContent = status.message;
+            progressFill.style.width = status.progress + '%';
+            progressFill.textContent = status.progress + '%';
+            
+            if (status.processing_time) {
+                processingInfo.textContent = `Processing completed in ${status.processing_time.toFixed(1)} seconds`;
+            } else if (status.start_time) {
+                const elapsed = (Date.now() / 1000) - status.start_time;
+                processingInfo.textContent = `Processing time: ${elapsed.toFixed(1)} seconds`;
+            }
+        }
+        
+        function showDownloadButton() {
+            document.getElementById('downloadSection').style.display = 'block';
+            
+            // Show video download button if video was created
+            if (embedRequested) {
+                const videoBtn = document.getElementById('downloadVideoBtn');
+                videoBtn.style.display = 'inline-block';
+            }
+            
+            showSuccess('Subtitles generated successfully! You can now download them.');
+        }
+        
+        async function downloadSubtitles() {
+            if (!currentTaskId) return;
+            
+            try {
+                const response = await fetch(`/download/${currentTaskId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `subtitles_${currentTaskId}.srt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Download failed');
+                }
+            } catch (error) {
+                showError('Download error: ' + error.message);
+            }
+        }
+        
+        async function downloadVideo() {
+            if (!currentTaskId) return;
+            
+            try {
+                const response = await fetch(`/download-video/${currentTaskId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `video_with_subtitles_${currentTaskId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Video download failed. Video with subtitles may not have been created.');
+                }
+            } catch (error) {
+                showError('Video download error: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').appendChild(errorDiv);
+        }
+        
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.querySelector('.container').appendChild(successDiv);
+        }
+        
+        function clearMessages() {
+            const messages = document.querySelectorAll('.error, .success');
+            messages.forEach(msg => msg.remove());
+        }
+        
+        // Reset form
+        function resetForm() {
+            currentTaskId = null;
+            embedRequested = false;
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            document.getElementById('statusSection').style.display = 'none';
+            document.getElementById('downloadSection').style.display = 'none';
+            document.getElementById('downloadVideoBtn').style.display = 'none';
+            
+            // Reset file input and display
+            removeFile();
+            
+            document.getElementById('embedSubtitles').checked = false;
+            document.getElementById('languageSelect').value = 'en';
+            clearMessages();
+        }
+        
+        // Add reset button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const resetBtn = document.createElement('button');
+            resetBtn.textContent = '🔄 Start Over';
+            resetBtn.onclick = resetForm;
+            resetBtn.style.backgroundColor = '#6c757d';
+            resetBtn.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#545b62';
+            });
+            resetBtn.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '#6c757d';
+            });
+            
+            document.querySelector('.upload-section').appendChild(resetBtn);
+        });
+    </script>
+</body>
+</html>
