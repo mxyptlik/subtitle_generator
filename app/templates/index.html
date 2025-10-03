@@ -314,7 +314,6 @@
                         <option value="ja">Japanese</option>
                         <option value="ko">Korean</option>
                         <option value="zh">Chinese</option>
-                        <option value="yo">Yoruba</option>
                     </select>
                 </div>
                 
@@ -464,19 +463,6 @@
             formData.append('file', file);
             formData.append('embed_subtitles', embedCheckbox.checked);
             formData.append('language', languageSelect.value);
-            
-            // Debug logging
-            console.log('=== FRONTEND DEBUG ===');
-            console.log('Selected language:', languageSelect.value);
-            console.log('Language select element:', languageSelect);
-            console.log('Embed subtitles:', embedCheckbox.checked);
-            console.log('=== END FRONTEND DEBUG ===');
-            
-            // Debug logging
-            console.log('=== FRONTEND DEBUG ===');
-            console.log('Selected language:', languageSelect.value);
-            console.log('Embed subtitles:', embedCheckbox.checked);
-            console.log('=== END FRONTEND DEBUG ===');
             
             try {
                 // Disable upload button

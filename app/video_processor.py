@@ -37,25 +37,59 @@ class VideoProcessor:
             Tuple of (audio_file_path, duration_in_seconds)
         """
         try:
+            # Validate input file
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Video file not found: {video_path}")
+            
+            file_size = os.path.getsize(video_path)
+            if file_size == 0:
+                raise ValueError(f"Video file is empty: {video_path}")
+            
+            logger.info(f"Input video file size: {file_size} bytes")
+            
             # Create temporary file for audio
             temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
             audio_path = temp_audio.name
             temp_audio.close()
             
-            logger.info(f"Extracting audio from {video_path}")
+            logger.info(f"Extracting audio from {video_path} to {audio_path}")
             
-            # Extract audio using ffmpeg
-            (
-                ffmpeg
-                .input(video_path)
-                .output(audio_path, acodec='pcm_s16le', ac=1, ar='16000')
-                .overwrite_output()
-                .run(quiet=True)
-            )
+            # Extract audio using ffmpeg with error output enabled
+            try:
+                (
+                    ffmpeg
+                    .input(video_path)
+                    .output(audio_path, acodec='pcm_s16le', ac=1, ar='16000')
+                    .overwrite_output()
+                    .run(quiet=False, capture_stderr=True)  # Enable error output
+                )
+            except ffmpeg.Error as e:
+                # Get detailed FFmpeg error
+                stderr = e.stderr.decode('utf-8') if e.stderr else 'No stderr available'
+                stdout = e.stdout.decode('utf-8') if e.stdout else 'No stdout available'
+                
+                logger.error(f"FFmpeg stdout: {stdout}")
+                logger.error(f"FFmpeg stderr: {stderr}")
+                raise Exception(f"FFmpeg failed: {stderr}")
             
-            # Get duration
-            probe = ffmpeg.probe(video_path)
-            duration = float(probe['streams'][0]['duration'])
+            # Verify audio file was created
+            if not os.path.exists(audio_path):
+                raise FileNotFoundError(f"Audio file was not created: {audio_path}")
+            
+            audio_size = os.path.getsize(audio_path)
+            if audio_size == 0:
+                raise ValueError(f"Audio file is empty: {audio_path}")
+            
+            logger.info(f"Audio file created: {audio_size} bytes")
+            
+            # Get duration with error handling
+            try:
+                probe = ffmpeg.probe(video_path)
+                duration = float(probe['streams'][0]['duration'])
+            except Exception as probe_error:
+                logger.warning(f"Could not probe duration: {probe_error}")
+                # Estimate duration from file size (rough approximation)
+                duration = max(1.0, file_size / (1024 * 1024))  # Assume ~1MB per minute
             
             logger.info(f"Audio extracted successfully. Duration: {duration:.2f}s")
             return audio_path, duration
@@ -64,7 +98,11 @@ class VideoProcessor:
             logger.error(f"Failed to extract audio: {e}")
             # Clean up temp file if it exists
             if 'audio_path' in locals() and os.path.exists(audio_path):
-                os.unlink(audio_path)
+                try:
+                    os.unlink(audio_path)
+                    logger.info("Cleaned up temporary audio file")
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to clean up temp file: {cleanup_error}")
             raise
     
     def transcribe_audio(self, audio_path: str) -> Dict:
@@ -126,8 +164,7 @@ class VideoProcessor:
                 'nl': 'Dutch',
                 'sv': 'Swedish',
                 'pl': 'Polish',
-                'tr': 'Turkish',
-                'yo': 'Yoruba'
+                'tr': 'Turkish'
             }
             
             target_lang_name = language_names.get(target_language, target_language)
@@ -199,7 +236,7 @@ class VideoProcessor:
             client = openai.OpenAI(api_key=api_key)
             
             response = client.chat.completions.create(
-                model="gpt-4o",  # Best current model for translation
+                model="gpt-3.5-turbo",
                 messages=[
                     {
                         "role": "system", 
@@ -210,7 +247,7 @@ class VideoProcessor:
                         "content": f"Translate this text to {target_language}: {text}"
                     }
                 ],
-                max_completion_tokens=200,
+                max_tokens=200,
                 temperature=0.1
             )
             
