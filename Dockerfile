@@ -10,19 +10,22 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p uploads outputs
+RUN mkdir -p uploads outputs downloads logs
 
 # Expose ports
 EXPOSE 8000 7860
