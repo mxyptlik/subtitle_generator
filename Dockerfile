@@ -4,15 +4,17 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
+# Add a faster mirror (without assuming sources.list exists)
+RUN echo "deb http://deb.debian.org.cloudflare/debian/ bookworm main" > /etc/apt/sources.list.d/cloudflare.list
+
 # Install system dependencies including FFmpeg
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     ffmpeg \
     curl \
     wget \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && rm -rf /var/tmp/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
